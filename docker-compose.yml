@@ -1,0 +1,18 @@
+version: "3.7"
+services:
+  peer:
+    build:
+      context: .
+      dockerfile: DockerfileClient
+    image: client
+    container_name: peer
+    working_dir: /work
+    networks:
+      - mpc-network
+    ports:
+    - 9091
+    - 9092
+    - 9093
+
+networks:
+  mpc-network:

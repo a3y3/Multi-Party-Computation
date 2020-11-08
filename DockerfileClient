@@ -1,0 +1,17 @@
+FROM ubuntu:20.10
+MAINTAINER a3y3 [Soham Dongargaonkar]
+
+RUN apt update && \
+    apt install -y software-properties-common && \
+    apt install -y openjdk-11-jdk && \
+    apt install -y net-tools iputils-ping
+
+RUN mkdir /work
+
+WORKDIR /work
+
+COPY src/Client.java .
+
+RUN javac Client.java
+
+ENTRYPOINT java Client
