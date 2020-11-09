@@ -3,16 +3,32 @@ services:
   peer:
     build:
       context: .
-      dockerfile: DockerfileClient
-    image: client
-    container_name: peer
+      dockerfile: docker/DockerfilePeer
+    image: peer
     working_dir: /work
     networks:
       - mpc-network
     ports:
-    - 9091
-    - 9092
-    - 9093
+      - 6666
+      - 9091
+      - 9092
+      - 9093
+
+  runner:
+    depends_on:
+      - peer
+    build:
+      context: .
+      dockerfile: docker/DockerfileRunner
+    image: runner
+    working_dir: /work
+    networks:
+      - mpc-network
+    ports:
+      - 6666
+      - 9091
+      - 9092
+      - 9093
 
 networks:
   mpc-network:

@@ -8,8 +8,10 @@ RUN apt update && \
 
 RUN mkdir /work
 
-COPY src/Runner.java /work
-
 WORKDIR /work
 
-RUN javac Runner.java && ls && java Runner
+COPY src/Peer.java .
+
+RUN javac Peer.java
+
+ENTRYPOINT java Peer
