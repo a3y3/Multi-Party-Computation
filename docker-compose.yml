@@ -8,11 +8,6 @@ services:
     working_dir: /work
     networks:
       - mpc-network
-    ports:
-      - 6666
-      - 9091
-      - 9092
-      - 9093
 
   runner:
     depends_on:
@@ -24,11 +19,6 @@ services:
     working_dir: /work
     networks:
       - mpc-network
-    ports:
-      - 6666
-      - 9091
-      - 9092
-      - 9093
 
 networks:
   mpc-network:
