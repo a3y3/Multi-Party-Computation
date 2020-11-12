@@ -8,10 +8,10 @@ RUN apt update && \
 
 RUN mkdir /work
 
-COPY src/Runner.java /work
-
 WORKDIR /work
 
-RUN javac Runner.java
+COPY src/*.java ./
+
+RUN javac *.java
 
 ENTRYPOINT java Runner

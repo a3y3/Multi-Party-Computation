@@ -1,9 +1,12 @@
+import java.io.IOException;
 import java.math.BigInteger;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 
 public interface RunnerInterface {
     /**
      * For the secret sharing protocol, the Runner class has the secret. Ideally, this
-     * secret should be taken from the user, but currently defaults to 50.
+     * secret should be taken from the user, but currently defaults to 40.
      *
      * @return the secret.
      */
@@ -23,5 +26,5 @@ public interface RunnerInterface {
      * @param f an array such that f[i] = f(i). See {@code getSecretFromUser()}
      * @param serviceName the host name of the service. Used for InetAddress.getByName().
      */
-    void distributeShares(BigInteger[] f, String serviceName);
+    void distributeShares(BigInteger[] f, int numPeers, String serviceName, int port) throws IOException;
 }

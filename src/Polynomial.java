@@ -30,7 +30,7 @@ public class Polynomial implements PolynomialInterface {
             //a[2]*x^2 + a[1]*x^1 + a[0].
             //The peril of using Java: having to write unreadable code for simple
             // things :(
-            BigInteger multFactor = new BigInteger(String.valueOf(Math.pow(x, i)));
+            BigInteger multFactor = new BigInteger(String.valueOf((int)Math.pow(x, i)));
             result = result.add(a[i].multiply(multFactor));
         }
         return result;
