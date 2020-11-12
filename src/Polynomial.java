@@ -42,9 +42,17 @@ public class Polynomial implements PolynomialInterface {
     @Override
     public BigInteger calculateSecret2Degree(int[] x, BigInteger[] y) {
         BigInteger result;
-        result = y[2].multiply(new BigInteger(String.valueOf(x[0] * x[1] * (x[0] - x[1]))))
-                .add(y[0].multiply(new BigInteger(String.valueOf(x[1] * x[2] * (x[1] - x[2])))))
-                .add(y[1].multiply(new BigInteger(String.valueOf(x[0] * x[2] * (x[0] - x[2])))));
-        return result.divide(new BigInteger(String.valueOf((x[2] * x[2]) - x[2] * (x[1] + x[0]) + x[0] * x[1])));
+        result =
+                y[2].multiply(new BigInteger(String.valueOf(x[0] * x[1] * (x[0] - x[1]))))
+                        .add(y[0].multiply(new BigInteger(String.valueOf(x[1] * x[2] * (x[1] - x[2])))))
+                        .add(y[1].multiply(new BigInteger(String.valueOf(x[0] * x[2] * (x[2] - x[0])))));
+        return result.divide(new BigInteger(String.valueOf(
+                (x[2] * x[2]) - x[2] * (x[1] + x[0]) + x[0] * x[1])).
+                multiply(new BigInteger(String.valueOf(x[0] - x[1]))));
+    }
+
+    public static BigInteger calculateSecret(int[] x, BigInteger[] y, int degree) {
+        Polynomial polynomial = new Polynomial(new BigInteger("0"));
+        return polynomial.calculateSecret2Degree(x, y);
     }
 }
