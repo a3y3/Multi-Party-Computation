@@ -13,6 +13,8 @@ public interface PolynomialInterface {
      * In a t,n scheme, given t values for x and t values for y, this function returns
      * the value of f(0). This function is not generic and only works for a polynomial
      * of degree 2, ie. ax^2+bx+c.
+     * The formula for calculating the secret is too complicated to be written in this
+     * doc. Please see README.md for the formula.
      */
     BigInteger calculateSecret2Degree(int[] x, BigInteger[] y);
 }
