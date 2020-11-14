@@ -1,4 +1,5 @@
 import java.math.BigInteger;
+import java.util.Arrays;
 
 public class Polynomial implements PolynomialInterface {
     BigInteger[] a;
@@ -54,5 +55,13 @@ public class Polynomial implements PolynomialInterface {
     public static BigInteger calculateSecret(int[] x, BigInteger[] y, int degree) {
         Polynomial polynomial = new Polynomial(new BigInteger("0"));
         return polynomial.calculateSecret2Degree(x, y);
+    }
+
+    @Override
+    public String toString() {
+        return "Polynomial{" +
+                a[2] + "x^2 + " +
+                a[1] + "x + " +
+                a[0] +'}';
     }
 }

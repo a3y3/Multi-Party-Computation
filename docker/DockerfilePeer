@@ -10,8 +10,8 @@ RUN mkdir /work
 
 WORKDIR /work
 
-COPY src/Peer.java .
+COPY src/*.java ./
 
-RUN javac Peer.java
+RUN javac *.java
 
 ENTRYPOINT java Peer

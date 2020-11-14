@@ -17,4 +17,10 @@ public interface PolynomialInterface {
      * doc. Please see README.md for the formula.
      */
     BigInteger calculateSecret2Degree(int[] x, BigInteger[] y);
+
+    /**
+     * Creates a String of the polynomial. Currently only supports 2 degree polynomials.
+     * @return
+     */
+    String toString();
 }

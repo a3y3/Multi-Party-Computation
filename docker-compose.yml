@@ -6,8 +6,6 @@ services:
       dockerfile: docker/DockerfilePeer
     image: peer
     working_dir: /work
-    networks:
-      - mpc-network
 
   runner:
     depends_on:
@@ -17,8 +15,3 @@ services:
       dockerfile: docker/DockerfileRunner
     image: runner
     working_dir: /work
-    networks:
-      - mpc-network
-
-networks:
-  mpc-network:
