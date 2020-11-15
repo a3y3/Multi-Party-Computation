@@ -9,17 +9,7 @@ import java.net.*;
  */
 public class Peer {
     public static final int PORT = 5760;
-    public static final String DELIMITER = ";";
-
-    private static class ShareIDWrapper {
-        BigInteger share;
-        int id;
-
-        public ShareIDWrapper(String message) {
-            this.share = new BigInteger(message.split(DELIMITER)[0]);
-            this.id = Integer.parseInt(message.split(DELIMITER)[1]);
-        }
-    }
+    int id;
 
     public static void main(String[] args) throws IOException {
         Peer peer = new Peer();
@@ -27,56 +17,65 @@ public class Peer {
     }
 
     private void demonstrateTOverNSecretSharing() throws IOException {
-        String message = acceptMessage(PORT);
-        ShareIDWrapper shareIDWrapper = new ShareIDWrapper(message);
-        int id = shareIDWrapper.id;
-        System.out.println("I received secretShare " + shareIDWrapper.share + ", and my ID " +
-                "is: " + id);
+        DatagramSocket datagramSocket = new DatagramSocket(PORT);
+        String message = acceptMessage(datagramSocket);
+        datagramSocket.close();
+
+        Utils.ShareWrapper shareWrapper = new Utils.ShareWrapper(message);
+        id = shareWrapper.id;
+        System.out.println("I received secretShare " + shareWrapper.share + ", my id is" +
+                " " + shareWrapper.id + " and my x is " + shareWrapper.x);
         if (id == 3) {
             System.out.println("I will demonstrate reconstruction by asking peers 2, 4 " +
-                            "and 5 to send me their shares.");
-            ShareIDWrapper[] shareIDWrappers = acceptSharesFromThreePeers();
-            BigInteger[] y = new BigInteger[shareIDWrappers.length];
-            int[] x = new int[shareIDWrappers.length];
-            for (int i = 0; i < shareIDWrappers.length; i++){
-                x[i] = shareIDWrappers[i].id;
-                y[i] = shareIDWrappers[i].share;
+                    "and 5 to send me their shares.");
+            Utils.ShareWrapper[] shareWrappers = acceptSharesFromThreePeers();
+            BigInteger[] y = new BigInteger[shareWrappers.length];
+            int[] x = new int[shareWrappers.length];
+            for (int i = 0; i < shareWrappers.length; i++) {
+                x[i] = shareWrappers[i].x;
+                y[i] = shareWrappers[i].share;
             }
             BigInteger reconstructedSecret = Polynomial.calculateSecret(x, y, 2);
             System.out.println("Found the secret! Value: " + reconstructedSecret);
         } else if (id == 2 || id == 4 || id == 5) {
-            sendShareToPeer(shareIDWrapper.share, id, 3);
+            // Ensure that id==3 has a socket up and running before sending a share.
+            try {
+                Thread.sleep(1000);
+                String peerName = Utils.SERVICE_NAME + "_" + 3;
+                sendShareToPeer(shareWrapper, peerName, PORT);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    private ShareIDWrapper[] acceptSharesFromThreePeers() throws IOException {
-        ShareIDWrapper[] shareIDWrappers = new ShareIDWrapper[3];
+    private Utils.ShareWrapper[] acceptSharesFromThreePeers() throws IOException {
+        Utils.ShareWrapper[] shareWrappers = new Utils.ShareWrapper[3];
+        DatagramSocket datagramSocket = new DatagramSocket(PORT);
         for (int i = 0; i < 3; i++) {
-            String message = acceptMessage(PORT);
-            shareIDWrappers[i] = new ShareIDWrapper(message);
+            String message = acceptMessage(datagramSocket);
+            shareWrappers[i] = new Utils.ShareWrapper(message);
         }
-        return shareIDWrappers;
+        datagramSocket.close();
+        return shareWrappers;
     }
 
     @SuppressWarnings("SameParameterValue")
-    private void sendShareToPeer(BigInteger secretShare, int fromPeerID, int toPeerID) throws IOException {
+    private void sendShareToPeer(Utils.ShareWrapper shareWrapper, String peerName,
+                                 int port) throws IOException {
         DatagramSocket socket = new DatagramSocket();
-        String peerName = Runner.SERVICE_NAME + "_" + toPeerID;
-        String share = String.valueOf(secretShare);
-        share += Peer.DELIMITER + fromPeerID;
-        byte[] buffer = share.getBytes();
+        String message = shareWrapper.toString();
+        byte[] buffer = message.getBytes();
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length,
-                InetAddress.getByName(peerName), PORT);
+                InetAddress.getByName(peerName), port);
         socket.send(packet);
     }
 
     @SuppressWarnings("SameParameterValue")
-    private String acceptMessage(int port) throws IOException {
-        DatagramSocket datagramSocket = new DatagramSocket(port);
+    private String acceptMessage(DatagramSocket datagramSocket) throws IOException {
         byte[] buff = new byte[256];
         DatagramPacket datagramPacket = new DatagramPacket(buff, buff.length);
         datagramSocket.receive(datagramPacket);
-        datagramSocket.close();
         return new String(datagramPacket.getData(), 0, datagramPacket.getLength());
     }
 }

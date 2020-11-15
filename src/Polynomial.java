@@ -1,5 +1,4 @@
 import java.math.BigInteger;
-import java.util.Arrays;
 
 public class Polynomial implements PolynomialInterface {
     BigInteger[] a;
@@ -59,9 +58,9 @@ public class Polynomial implements PolynomialInterface {
 
     @Override
     public String toString() {
-        return "Polynomial{" +
+        return "Polynomial f(x)=" +
                 a[2] + "x^2 + " +
                 a[1] + "x + " +
-                a[0] +'}';
+                a[0];
     }
 }
