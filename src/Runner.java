@@ -4,6 +4,7 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Random;
 
 public class Runner {
     private static final int NUM_PEERS = 5;
@@ -21,24 +22,25 @@ public class Runner {
      * @throws IOException if something goes wrong during networking/IO communication.
      */
     private void demonstrateTOverNSecretSharing() throws IOException {
-        secret = getSecretFromUser();
+        secret = getSecret();
         Polynomial polynomial = new Polynomial(secret);
         HashMap<Integer, Integer> idToXMap = getIDToXMapping();
         BigInteger[] f = getF(polynomial, idToXMap);
-        System.out.println("Secret is: " + secret);
-        System.out.println("Polynomial is: " + polynomial);
-        System.out.println("Distributing shares to peers. Peer i gets share = f(i).");
+        System.out.println("Secret is: " + secret + " and polynomial is: " + polynomial);
+        System.out.println("Distributing shares to peers. Peer i gets share = f(x).");
         distributeShares(f, idToXMap, NUM_PEERS, Utils.SERVICE_NAME, Peer.PORT);
     }
 
     /**
      * For the secret sharing protocol, the Runner class has the secret. Ideally, this
-     * secret should be taken from the user, but currently defaults to 40.
+     * secret should be taken from the user, but currently is generated randomly.
      *
      * @return the secret.
      */
-    public BigInteger getSecretFromUser() {
-        return new BigInteger("40");
+    public BigInteger getSecret() {
+        Random r = new Random();
+        int numBits = 80;
+        return new BigInteger(numBits, r);
     }
 
     /**
@@ -96,11 +98,9 @@ public class Runner {
         //peer i gets share f[x]
         for (int i = 1; i <= numPeers; i++) {
             String peerName = serviceName + "_" + i;
-            String share = String.valueOf(f[i]);
-            share += Utils.DELIMITER + i;
             int x = idToXMap.get(i);
-            share += Utils.DELIMITER + x;
-            byte[] buffer = share.getBytes();
+            Utils.ShareWrapper shareWrapper = new Utils.ShareWrapper(f[i], i, x);
+            byte[] buffer = shareWrapper.toString().getBytes();
             packet = new DatagramPacket(buffer, buffer.length,
                     InetAddress.getByName(peerName), port);
             socket.send(packet);

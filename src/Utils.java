@@ -9,6 +9,12 @@ public class Utils {
         int id;
         int x;
 
+        public ShareWrapper(BigInteger share, int id, int x) {
+            this.share = share;
+            this.id = id;
+            this.x = x;
+        }
+
         public ShareWrapper(String message) {
             String[] splitMessage = message.split(DELIMITER);
             this.share = new BigInteger(splitMessage[0]);
