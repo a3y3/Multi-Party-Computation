@@ -12,9 +12,10 @@ import java.util.HashMap;
 public class Peer {
     public static final int PORT = 5760;
     int id;
-    DatagramSocket datagramSocket = new DatagramSocket(PORT);
+    DatagramSocket datagramSocket;
 
     public Peer() throws SocketException {
+        datagramSocket = new DatagramSocket(PORT);
     }
 
     public static void main(String[] args) throws IOException {
@@ -31,6 +32,25 @@ public class Peer {
             default -> 21;
         };
         peer.demonstrateSecretShareSummation(privateValue);
+
+        if (peer.id == 1 || peer.id == 2){
+            peer.timeout();
+            peer.sendContinueToRunner();
+            System.out.println("*****");
+            peer.demonstrateBeaverTriples();
+        }
+
+    }
+
+    private void demonstrateBeaverTriples() {
+        int privateValue;
+        if(id == 1){
+            privateValue = 11;
+        }
+        else{
+            privateValue = 20;
+        }
+        System.out.println("My private value is " + privateValue);
     }
 
     private void demonstrateSecretShareSummation(int privateValue) throws IOException {
@@ -39,7 +59,7 @@ public class Peer {
         System.out.println(polynomial);
         HashMap<Integer, Integer> idToXMap = Utils.getIDToXWithoutRandomization();
         BigInteger[] f = Utils.getF(polynomial, idToXMap);
-        Utils.distributeShares(f, idToXMap, Utils.NUM_PEERS, Utils.SERVICE_NAME, PORT);
+        Utils.distributeShares(f, idToXMap, Utils.NUM_PEERS, Utils.SERVICE_NAME_PEER, PORT);
         Utils.ShareWrapper[] shareWrappers = acceptSharesFromNPeers(5);
         System.out.println("Received shares " + Arrays.toString(shareWrappers));
         Utils.ShareWrapper sharesSummation = addReceivedShares(shareWrappers);
@@ -81,7 +101,7 @@ public class Peer {
             BigInteger reconstructedSecret = Polynomial.calculateSecret(x, y, 2);
             System.out.println("Found the secret! Value: " + reconstructedSecret);
         } else if (id == 2 || id == 4 || id == 5) {
-            String peerName = Utils.SERVICE_NAME + "_" + 3;
+            String peerName = Utils.SERVICE_NAME_PEER + "_" + 3;
             sendShareToPeer(shareWrapper, peerName, PORT);
         }
     }
@@ -111,6 +131,15 @@ public class Peer {
         DatagramPacket datagramPacket = new DatagramPacket(buff, buff.length);
         datagramSocket.receive(datagramPacket);
         return new String(datagramPacket.getData(), 0, datagramPacket.getLength());
+    }
+
+    private void sendContinueToRunner() throws IOException {
+        DatagramSocket datagramSocket = new DatagramSocket();
+        String message = "continue";
+        DatagramPacket datagramPacket = new DatagramPacket(message.getBytes(),
+                message.length(), InetAddress.getByName(Utils.SERVICE_NAME_RUNNER),
+                Runner.PORT);
+        datagramSocket.send(datagramPacket);
     }
 
     private void timeout() {

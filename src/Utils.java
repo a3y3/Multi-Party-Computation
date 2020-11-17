@@ -10,7 +10,9 @@ import java.util.HashMap;
 public class Utils {
     public static final int NUM_PEERS = 5;
     public static final String DELIMITER = ";";
-    public static final String SERVICE_NAME = "multi-party-computation_peer";
+    public static final String SERVICE_NAME = "multi-party-computation";
+    public static final String SERVICE_NAME_RUNNER = SERVICE_NAME + "runner";
+    public static final String SERVICE_NAME_PEER = SERVICE_NAME + "_peer";
 
     public static class ShareWrapper {
         BigInteger share;

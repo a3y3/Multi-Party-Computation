@@ -1,14 +1,24 @@
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Random;
 
 public class Runner {
     BigInteger secret;
+    protected static final int PORT = 7890;
 
     public static void main(String[] args) throws IOException {
         Runner runner = new Runner();
         runner.demonstrateTOverNSecretSharing();
+        runner.waitForContinue();
+        runner.demonstrateBeaverTriples();
+    }
+
+    private void demonstrateBeaverTriples() {
+
     }
 
     /**
@@ -24,7 +34,7 @@ public class Runner {
         BigInteger[] f = Utils.getF(polynomial, idToXMap);
         System.out.println("Secret is: " + secret + " and polynomial is: " + polynomial);
         System.out.println("Distributing shares to peers. Peer i gets share = f(x).");
-        Utils.distributeShares(f, idToXMap, Utils.NUM_PEERS, Utils.SERVICE_NAME,
+        Utils.distributeShares(f, idToXMap, Utils.NUM_PEERS, Utils.SERVICE_NAME_PEER,
                 Peer.PORT);
     }
 
@@ -38,5 +48,15 @@ public class Runner {
         Random r = new Random();
         int numBits = 80;
         return new BigInteger(numBits, r);
+    }
+
+    private void waitForContinue() throws IOException {
+        DatagramSocket datagramSocket = new DatagramSocket(PORT);
+        for (int i = 0; i < 2; i++) {
+            byte[] buffer = new byte[256];
+            DatagramPacket datagramPacket = new DatagramPacket(buffer, buffer.length);
+            datagramSocket.receive(datagramPacket);
+        }
+        datagramSocket.close();
     }
 }
