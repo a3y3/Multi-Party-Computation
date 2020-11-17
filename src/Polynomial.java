@@ -53,7 +53,7 @@ public class Polynomial {
                         .add(y[0].multiply(new BigInteger(String.valueOf(x[1] * x[2] * (x[1] - x[2])))))
                         .add(y[1].multiply(new BigInteger(String.valueOf(x[0] * x[2] * (x[2] - x[0])))));
         return result.divide(new BigInteger(String.valueOf(
-                (x[2] * x[2]) - x[2] * (x[1] + x[0]) + x[0] * x[1])).
+                (x[2] * x[2]) - (x[2] * (x[1] + x[0])) + (x[0] * x[1]))).
                 multiply(new BigInteger(String.valueOf(x[0] - x[1]))));
     }
 
