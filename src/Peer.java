@@ -23,35 +23,39 @@ public class Peer {
         Utils.ShareWrapper shareWrapper = peer.init();
         BigInteger reconstructedSecret = peer.reconstructSecret(shareWrapper);
         System.out.println("Found the secret! Value: " + reconstructedSecret);
-//        peer.timeout();
-//        System.out.println("*****");
-//        int privateValue = switch (peer.id) {
-//            case 1 -> 11;
-//            case 2 -> 15;
-//            case 3 -> 28;
-//            case 4 -> 31;
-//            default -> 21;
-//        };
-//        peer.demonstrateSecretShareSummation(privateValue);
-//        System.out.println("*****");
-//        peer.demonstrateBeaverTriples(privateValue);
+        peer.timeout();
+        System.out.println("*****");
+        int privateValue = switch (peer.id) {
+            case 1 -> 11;
+            case 2 -> 15;
+            case 3 -> 28;
+            case 4 -> 31;
+            default -> 21;
+        };
+        BigInteger summation = peer.demonstrateSecretShareSummation(privateValue);
+        System.out.println("Found the summation! Value: " + summation);
+
+        peer.timeout();
+        System.out.println("*****");
+        peer.demonstrateBeaverTriples(privateValue);
     }
 
     private void demonstrateBeaverTriples(int privateValue) throws IOException {
-        // Last peer is the "solver", which
-        for (int i = 1; i <= Utils.NUM_PEERS - 1; i += 10) {
+        BigInteger finalResult = new BigInteger("1");
+        for (int i = 1; i <= Utils.NUM_PEERS - 1; i += 2) {
             if (id == i || id == i + 1) {
                 Polynomial polynomial =
                         new Polynomial(new BigInteger(String.valueOf(privateValue)));
-                System.out.println(polynomial);
                 HashMap<Integer, Integer> idToXMap = Utils.getIDToXWithoutRandomization();
                 BigInteger[] f = Utils.getF(polynomial, idToXMap);
                 Utils.distributeShares(f, idToXMap, Utils.NUM_PEERS, Utils.SERVICE_NAME_PEER, PORT);
             }
             Utils.ShareWrapper[] shareWrappers = acceptSharesFromNPeers(2);
-            sendContinueToRunner();
+
             BigInteger x_i = shareWrappers[0].share;
             BigInteger y_i = shareWrappers[1].share;
+
+            sendContinueToRunner();
 
             //There aren't three peers, this is the runner sending 3 separate values.
             shareWrappers = acceptSharesFromNPeers(3);
@@ -62,15 +66,14 @@ public class Peer {
             BigInteger differenceXA = x_i.subtract(a_i);
             BigInteger differenceYB = y_i.subtract(b_i);
 
-
-            Utils.ShareWrapper[] differenceXs = acceptSharesFromNPeers(Utils.NUM_PEERS);
-//            broadcastValue(differenceYB);
-            Utils.ShareWrapper[] differenceYs = acceptSharesFromNPeers(Utils.NUM_PEERS);
-
-            BigInteger xPrime = addReceivedShares(differenceXs).share;
-            BigInteger yPrime = addReceivedShares(differenceYs).share;
-
+            timeout();
+            BigInteger xPrime = reconstructSecret(new Utils.ShareWrapper(differenceXA,
+                    id, id));
             System.out.println("xPrime: " + xPrime);
+
+            timeout();
+            BigInteger yPrime = reconstructSecret(new Utils.ShareWrapper(differenceYB,
+                    id, id));
             System.out.println("yPrime: " + yPrime);
 
             BigInteger xPrimeBi = xPrime.multiply(b_i);
@@ -78,15 +81,22 @@ public class Peer {
             BigInteger xPrimeYPrime = xPrime.multiply(yPrime);
             BigInteger z_i = c_i.add(xPrimeBi).add(yPrimeAi).add(xPrimeYPrime);
 
-//            broadcastValue(z_i);
-            Utils.ShareWrapper[] zIs = acceptSharesFromNPeers(Utils.NUM_PEERS);
-            BigInteger result = addReceivedShares(zIs).share;
+            timeout();
+            BigInteger result = reconstructSecret(new Utils.ShareWrapper(z_i, id, id));
+            System.out.println("Sub multiplication: " + result);
 
-            System.out.println("Result: " + result);
+            finalResult = finalResult.multiply(result);
+            System.out.println("Overall multiplication: " + finalResult);
+        }
+        if (id == 5) {
+            finalResult =
+                    finalResult.multiply(new BigInteger(String.valueOf(privateValue)));
+            System.out.println("Final result (including peer 5's secret: " + finalResult);
         }
     }
+    
 
-    private void demonstrateSecretShareSummation(int privateValue) throws IOException {
+    private BigInteger demonstrateSecretShareSummation(int privateValue) throws IOException {
         Polynomial polynomial =
                 new Polynomial(new BigInteger(String.valueOf(privateValue)));
         System.out.println(polynomial);
@@ -97,7 +107,7 @@ public class Peer {
         System.out.println("Received shares " + Arrays.toString(shareWrappers));
         Utils.ShareWrapper sharesSummation = addReceivedShares(shareWrappers);
         timeout();
-        reconstructSecret(sharesSummation);
+        return reconstructSecret(sharesSummation);
     }
 
     private Utils.ShareWrapper addReceivedShares(Utils.ShareWrapper[] shareWrappers) {
@@ -175,7 +185,7 @@ public class Peer {
 
     private void timeout() {
         try {
-            Thread.sleep(3000);
+            Thread.sleep(2000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

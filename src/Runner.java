@@ -1,10 +1,7 @@
-import jdk.jshell.execution.Util;
-
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -15,28 +12,29 @@ public class Runner {
     public static void main(String[] args) throws IOException {
         Runner runner = new Runner();
         runner.demonstrateTOverNSecretSharing();
-//        runner.waitForContinue();
-//        runner.demonstrateBeaverTriples();
+        runner.demonstrateBeaverTriples();
     }
 
     private void demonstrateBeaverTriples() throws IOException {
-        int a = 2;
-        int b = 3;
-        int c = a * b;
-        Polynomial polynomialA = new Polynomial(new BigInteger(String.valueOf(a)));
-        Polynomial polynomialB = new Polynomial(new BigInteger(String.valueOf(b)));
-        Polynomial polynomialC = new Polynomial(new BigInteger(String.valueOf(c)));
-        HashMap<Integer, Integer> idToXMap = Utils.getIDToXWithoutRandomization();
-        BigInteger[] fA = Utils.getF(polynomialA, idToXMap);
-        BigInteger[] fB = Utils.getF(polynomialB, idToXMap);
-        BigInteger[] fC = Utils.getF(polynomialC, idToXMap);
-        Utils.distributeShares(fA, idToXMap, Utils.NUM_PEERS, Utils.SERVICE_NAME_PEER,
-                Peer.PORT);
-        Utils.distributeShares(fB, idToXMap, Utils.NUM_PEERS, Utils.SERVICE_NAME_PEER,
-                Peer.PORT);
-        Utils.distributeShares(fC, idToXMap, Utils.NUM_PEERS, Utils.SERVICE_NAME_PEER,
-                Peer.PORT);
-
+        for (int i = 0; i < 2; i++) {
+            waitForContinue();
+            int a = 2;
+            int b = 3;
+            int c = a * b;
+            Polynomial polynomialA = new Polynomial(new BigInteger(String.valueOf(a)));
+            Polynomial polynomialB = new Polynomial(new BigInteger(String.valueOf(b)));
+            Polynomial polynomialC = new Polynomial(new BigInteger(String.valueOf(c)));
+            HashMap<Integer, Integer> idToXMap = Utils.getIDToXWithoutRandomization();
+            BigInteger[] fA = Utils.getF(polynomialA, idToXMap);
+            BigInteger[] fB = Utils.getF(polynomialB, idToXMap);
+            BigInteger[] fC = Utils.getF(polynomialC, idToXMap);
+            Utils.distributeShares(fA, idToXMap, Utils.NUM_PEERS, Utils.SERVICE_NAME_PEER,
+                    Peer.PORT);
+            Utils.distributeShares(fB, idToXMap, Utils.NUM_PEERS, Utils.SERVICE_NAME_PEER,
+                    Peer.PORT);
+            Utils.distributeShares(fC, idToXMap, Utils.NUM_PEERS, Utils.SERVICE_NAME_PEER,
+                    Peer.PORT);
+        }
     }
 
     /**
@@ -65,7 +63,7 @@ public class Runner {
     public BigInteger getSecret() {
         Random r = new Random();
         int numBits = 80;
-        return new BigInteger("40");
+        return new BigInteger(numBits, r);
     }
 
     private void waitForContinue() throws IOException {
