@@ -1,3 +1,5 @@
+import jdk.jshell.execution.Util;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.DatagramPacket;
@@ -13,11 +15,27 @@ public class Runner {
     public static void main(String[] args) throws IOException {
         Runner runner = new Runner();
         runner.demonstrateTOverNSecretSharing();
-        runner.waitForContinue();
-        runner.demonstrateBeaverTriples();
+//        runner.waitForContinue();
+//        runner.demonstrateBeaverTriples();
     }
 
-    private void demonstrateBeaverTriples() {
+    private void demonstrateBeaverTriples() throws IOException {
+        int a = 2;
+        int b = 3;
+        int c = a * b;
+        Polynomial polynomialA = new Polynomial(new BigInteger(String.valueOf(a)));
+        Polynomial polynomialB = new Polynomial(new BigInteger(String.valueOf(b)));
+        Polynomial polynomialC = new Polynomial(new BigInteger(String.valueOf(c)));
+        HashMap<Integer, Integer> idToXMap = Utils.getIDToXWithoutRandomization();
+        BigInteger[] fA = Utils.getF(polynomialA, idToXMap);
+        BigInteger[] fB = Utils.getF(polynomialB, idToXMap);
+        BigInteger[] fC = Utils.getF(polynomialC, idToXMap);
+        Utils.distributeShares(fA, idToXMap, Utils.NUM_PEERS, Utils.SERVICE_NAME_PEER,
+                Peer.PORT);
+        Utils.distributeShares(fB, idToXMap, Utils.NUM_PEERS, Utils.SERVICE_NAME_PEER,
+                Peer.PORT);
+        Utils.distributeShares(fC, idToXMap, Utils.NUM_PEERS, Utils.SERVICE_NAME_PEER,
+                Peer.PORT);
 
     }
 
@@ -47,12 +65,12 @@ public class Runner {
     public BigInteger getSecret() {
         Random r = new Random();
         int numBits = 80;
-        return new BigInteger(numBits, r);
+        return new BigInteger("40");
     }
 
     private void waitForContinue() throws IOException {
         DatagramSocket datagramSocket = new DatagramSocket(PORT);
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < Utils.NUM_PEERS; i++) {
             byte[] buffer = new byte[256];
             DatagramPacket datagramPacket = new DatagramPacket(buffer, buffer.length);
             datagramSocket.receive(datagramPacket);

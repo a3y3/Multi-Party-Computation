@@ -18,8 +18,10 @@ public class Polynomial {
         x = new int[degree + 1];
 
         a[0] = secret;
-        a[1] = new BigInteger(nBits, r);
-        a[2] = new BigInteger(nBits, r);
+//        a[1] = new BigInteger(nBits, r);
+//        a[2] = new BigInteger(nBits, r);
+        a[1] = new BigInteger("20");
+        a[2] = new BigInteger("10");
 
         x[degree] = 1;
     }
@@ -79,7 +81,7 @@ public class Polynomial {
 
     @Override
     public String toString() {
-        return "f(x)=" +
+        return "f(x) = " +
                 a[2] + "x^2 + " +
                 a[1] + "x + " +
                 a[0];
