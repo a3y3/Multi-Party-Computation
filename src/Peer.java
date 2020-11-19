@@ -39,7 +39,6 @@ public class Peer {
         System.out.println("*****");
         long start = System.nanoTime();
         peer.demonstrateBeaverTriplesSequential(privateValue);
-        peer.timeout();
         long end = System.nanoTime();
         long elapsedTime = end - start;
         System.out.println("Sequential execution took: " +
@@ -104,7 +103,7 @@ public class Peer {
             System.out.println("Sub multiplication: " + result);
 
             finalResult = finalResult.multiply(result);
-            System.out.println("Overall multiplication: " + finalResult);
+            System.out.println("Multiplication so far: " + finalResult);
         }
         if (id == 5) {
             finalResult =

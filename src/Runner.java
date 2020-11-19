@@ -17,18 +17,28 @@ public class Runner {
     public static void main(String[] args) throws IOException {
         Runner runner = new Runner();
         runner.demonstrateTOverNSecretSharing();
-        runner.demonstrateBeaverTriples();
+        runner.demonstrateBeaverTriplesNaive();
+        runner.demonstrateBeaverTriplesFast();
     }
 
-    private void demonstrateBeaverTriples() throws IOException {
+    private void demonstrateBeaverTriplesNaive(){
+        Utils.OneMillionBeaverTriples millionBeaverTriples =
+                new Utils.OneMillionBeaverTriples();
+        
+    }
+
+    private void demonstrateBeaverTriplesFast() throws IOException {
         for (int i = 0; i < 4; i++) {
             waitForContinue();
-            int a = 2;
-            int b = 3;
-            int c = a * b;
-            Polynomial polynomialA = new Polynomial(new BigInteger(String.valueOf(a)));
-            Polynomial polynomialB = new Polynomial(new BigInteger(String.valueOf(b)));
-            Polynomial polynomialC = new Polynomial(new BigInteger(String.valueOf(c)));
+            int numBits = 20;
+            Random r = new Random();
+            BigInteger a = new BigInteger(numBits, r);
+            BigInteger b = new BigInteger(numBits, r);
+            BigInteger c = a.multiply(b);
+
+            Polynomial polynomialA = new Polynomial(a);
+            Polynomial polynomialB = new Polynomial(b);
+            Polynomial polynomialC = new Polynomial(c);
             HashMap<Integer, Integer> idToXMap = Utils.getIDToXWithoutRandomization();
             BigInteger[] fA = Utils.getF(polynomialA, idToXMap);
             BigInteger[] fB = Utils.getF(polynomialB, idToXMap);

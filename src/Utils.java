@@ -3,9 +3,7 @@ import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
 
 public class Utils {
     public static final int NUM_PEERS = 5;
@@ -35,6 +33,50 @@ public class Utils {
         @Override
         public String toString() {
             return share + DELIMITER + id + DELIMITER + x;
+        }
+    }
+
+    public static class OneMillionBeaverTriples {
+        int nBits = 20;
+        Random r = new Random();
+        int n = (int) Math.pow(2, 20);
+        private static final String DELIMITER = ";"; //Separates a,b,c.
+        private static final String SEPARATOR = "/"; //Separates 2 triples (a;b;c/a;b;c/)
+
+        BigInteger[] a = new BigInteger[n];
+        BigInteger[] b = new BigInteger[n];
+        BigInteger[] c = new BigInteger[n];
+
+        OneMillionBeaverTriples() {
+            for (int i = 0; i < n; i++) {
+                a[i] = new BigInteger(nBits, r);
+                b[i] = new BigInteger(nBits, r);
+                c[i] = a[i].multiply(b[i]);
+            }
+        }
+
+        OneMillionBeaverTriples(String oneMillionTriples) {
+            String[] triples = oneMillionTriples.split(SEPARATOR);
+            for (int i = 0; i < triples.length; i++) {
+                String triple = triples[i];
+                String[] splitTriples = triple.split(DELIMITER);
+                a[i] = new BigInteger(splitTriples[0]);
+                b[i] = new BigInteger(splitTriples[1]);
+                c[i] = new BigInteger(splitTriples[2]);
+            }
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder result = new StringBuilder();
+            for (int i = 0; i < n; i++) {
+                String triple = a[i] + DELIMITER + b[i] + DELIMITER + c[i];
+                if (i != n - 1) {
+                    triple += SEPARATOR;
+                }
+                result.append(triple);
+            }
+            return result.toString();
         }
     }
 
