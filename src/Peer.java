@@ -44,7 +44,6 @@ public class Peer {
         long elapsedTime = end - start;
         System.out.println("Sequential execution took: " +
                 TimeUnit.SECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS) + "s.");
-        peer.timeout();
         System.out.println("*****");
         start = System.nanoTime();
         peer.demonstrateBeaverTriplesParallel(privateValue);

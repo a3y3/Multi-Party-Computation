@@ -16,10 +16,8 @@ public class Polynomial {
         a = new BigInteger[degree + 1];
 
         a[0] = secret;
-//        a[1] = new BigInteger(nBits, r);
-//        a[2] = new BigInteger(nBits, r);
-        a[1] = new BigInteger("6");
-        a[2] = new BigInteger("5");
+        a[1] = new BigInteger(nBits, r);
+        a[2] = new BigInteger(nBits, r);
     }
 
     /**

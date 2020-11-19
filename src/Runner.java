@@ -1,10 +1,8 @@
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -69,9 +67,9 @@ public class Runner {
      * @return the secret.
      */
     public BigInteger getSecret() {
-        Random r = new Random();
         int numBits = 80;
-        return new BigInteger("40");
+        Random r = new Random();
+        return new BigInteger(numBits, r);
     }
 
     private void waitForContinue() throws IOException {
