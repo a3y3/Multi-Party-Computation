@@ -1,8 +1,8 @@
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.*;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * In typical Multi Party Computation, there are several clients that store parts of a
@@ -37,10 +37,21 @@ public class Peer {
 
         peer.timeout();
         System.out.println("*****");
+        long start = System.nanoTime();
         peer.demonstrateBeaverTriplesSequential(privateValue);
         peer.timeout();
+        long end = System.nanoTime();
+        long elapsedTime = end - start;
+        System.out.println("Sequential execution took: " +
+                TimeUnit.SECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS) + "s.");
+        peer.timeout();
         System.out.println("*****");
+        start = System.nanoTime();
         peer.demonstrateBeaverTriplesParallel(privateValue);
+        end = System.nanoTime();
+        elapsedTime = end - start;
+        System.out.println("Parallel execution took: " +
+                TimeUnit.SECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS) + "s.");
     }
 
     private void demonstrateBeaverTriplesSequential(int privateValue) throws IOException {
@@ -72,7 +83,6 @@ public class Peer {
             BigInteger c_i = shareWrappers[2].share;
 
             BigInteger differenceXA = x_i.subtract(a_i);
-            System.out.println("My xi: " + x_i+"; a_i: " + a_i + "; diff: " + differenceXA);
             BigInteger differenceYB = y_i.subtract(b_i);
 
             timeout();
@@ -111,7 +121,7 @@ public class Peer {
             HashMap<Integer, Integer> idToXMap = Utils.getIDToXWithoutRandomization();
             BigInteger[] f = Utils.getF(polynomial, idToXMap);
             try {
-                Thread.sleep(id*100);
+                Thread.sleep(id * 100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -187,10 +197,10 @@ public class Peer {
         if (id == 5) {
             BigInteger finalResult = result1.multiply(result2);
             finalResult = finalResult.multiply(new BigInteger(String.valueOf(privateValue)));
-            System.out.println("Final result (including peer 5's secret: " + finalResult);
+            System.out.println("Final result (including peer 5's secret): " + finalResult);
         }
     }
-    
+
 
     private BigInteger demonstrateSecretShareSummation(int privateValue) throws IOException {
         Polynomial polynomial =
@@ -200,7 +210,6 @@ public class Peer {
         BigInteger[] f = Utils.getF(polynomial, idToXMap);
         Utils.distributeShares(f, idToXMap, Utils.NUM_PEERS, Utils.SERVICE_NAME_PEER, PORT);
         Utils.ShareWrapper[] shareWrappers = acceptSharesFromNPeers(5);
-        System.out.println("Received shares " + Arrays.toString(shareWrappers));
         Utils.ShareWrapper sharesSummation = addReceivedShares(shareWrappers);
         timeout();
         return reconstructSecret(sharesSummation);
@@ -226,7 +235,6 @@ public class Peer {
     private BigInteger reconstructSecret(Utils.ShareWrapper shareWrapper) throws IOException {
         broadcastValue(shareWrapper);
         Utils.ShareWrapper[] shareWrappers = acceptSharesFromNPeers(Utils.NUM_PEERS);
-        System.out.println("Reconstruct shares: received " + Arrays.toString(shareWrappers));
         BigInteger[] y = new BigInteger[shareWrappers.length];
         int[] x = new int[shareWrappers.length];
         for (int i = 0; i < shareWrappers.length; i++) {
