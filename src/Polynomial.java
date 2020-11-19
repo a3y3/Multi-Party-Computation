@@ -3,7 +3,6 @@ import java.util.Random;
 
 public class Polynomial {
     BigInteger[] a;
-    int[] x;
     int degree = 2;
 
     /**
@@ -15,13 +14,12 @@ public class Polynomial {
         int nBits = 80;
 
         a = new BigInteger[degree + 1];
-        x = new int[degree + 1];
 
         a[0] = secret;
-        a[1] = new BigInteger(nBits, r);
-        a[2] = new BigInteger(nBits, r);
-
-        x[degree] = 1;
+//        a[1] = new BigInteger(nBits, r);
+//        a[2] = new BigInteger(nBits, r);
+        a[1] = new BigInteger("6");
+        a[2] = new BigInteger("5");
     }
 
     /**

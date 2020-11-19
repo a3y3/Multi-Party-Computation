@@ -37,10 +37,13 @@ public class Peer {
 
         peer.timeout();
         System.out.println("*****");
-        peer.demonstrateBeaverTriples(privateValue);
+        peer.demonstrateBeaverTriplesSequential(privateValue);
+        peer.timeout();
+        System.out.println("*****");
+        peer.demonstrateBeaverTriplesParallel(privateValue);
     }
 
-    private void demonstrateBeaverTriples(int privateValue) throws IOException {
+    private void demonstrateBeaverTriplesSequential(int privateValue) throws IOException {
         BigInteger finalResult = new BigInteger("1");
         for (int i = 1; i <= Utils.NUM_PEERS - 1; i += 2) {
             if (id == i || id == i + 1) {
@@ -48,6 +51,11 @@ public class Peer {
                         new Polynomial(new BigInteger(String.valueOf(privateValue)));
                 HashMap<Integer, Integer> idToXMap = Utils.getIDToXWithoutRandomization();
                 BigInteger[] f = Utils.getF(polynomial, idToXMap);
+                try {
+                    Thread.sleep(id * 100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 Utils.distributeShares(f, idToXMap, Utils.NUM_PEERS, Utils.SERVICE_NAME_PEER, PORT);
             }
             Utils.ShareWrapper[] shareWrappers = acceptSharesFromNPeers(2);
@@ -64,6 +72,7 @@ public class Peer {
             BigInteger c_i = shareWrappers[2].share;
 
             BigInteger differenceXA = x_i.subtract(a_i);
+            System.out.println("My xi: " + x_i+"; a_i: " + a_i + "; diff: " + differenceXA);
             BigInteger differenceYB = y_i.subtract(b_i);
 
             timeout();
@@ -91,6 +100,93 @@ public class Peer {
         if (id == 5) {
             finalResult =
                     finalResult.multiply(new BigInteger(String.valueOf(privateValue)));
+            System.out.println("Final result (including peer 5's secret): " + finalResult);
+        }
+    }
+
+    private void demonstrateBeaverTriplesParallel(int privateValue) throws IOException {
+        if (id != 5) {
+            Polynomial polynomial =
+                    new Polynomial(new BigInteger(String.valueOf(privateValue)));
+            HashMap<Integer, Integer> idToXMap = Utils.getIDToXWithoutRandomization();
+            BigInteger[] f = Utils.getF(polynomial, idToXMap);
+            try {
+                Thread.sleep(id*100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            Utils.distributeShares(f, idToXMap, Utils.NUM_PEERS, Utils.SERVICE_NAME_PEER, PORT);
+        }
+        Utils.ShareWrapper[] shareWrappers = acceptSharesFromNPeers(4);
+
+        BigInteger x_1_i = shareWrappers[0].share;
+        BigInteger y_1_i = shareWrappers[1].share;
+        BigInteger x_2_i = shareWrappers[2].share;
+        BigInteger y_2_i = shareWrappers[3].share;
+
+        sendContinueToRunner();
+
+        //There aren't three peers, this is the runner sending 3 separate values.
+        shareWrappers = acceptSharesFromNPeers(3);
+        BigInteger a_1_i = shareWrappers[0].share;
+        BigInteger b_1_i = shareWrappers[1].share;
+        BigInteger c_1_i = shareWrappers[2].share;
+
+        sendContinueToRunner();
+
+        shareWrappers = acceptSharesFromNPeers(3);
+        BigInteger a_2_i = shareWrappers[0].share;
+        BigInteger b_2_i = shareWrappers[1].share;
+        BigInteger c_2_i = shareWrappers[2].share;
+
+        BigInteger differenceXA_1 = x_1_i.subtract(a_1_i);
+        BigInteger differenceYB_1 = y_1_i.subtract(b_1_i);
+        BigInteger differenceXA_2 = x_2_i.subtract(a_2_i);
+        BigInteger differenceYB_2 = y_2_i.subtract(b_2_i);
+
+        timeout();
+        BigInteger xPrime1 = reconstructSecret(new Utils.ShareWrapper(differenceXA_1,
+                id, id));
+        System.out.println("xPrime1: " + xPrime1);
+
+        timeout();
+        BigInteger yPrime1 = reconstructSecret(new Utils.ShareWrapper(differenceYB_1,
+                id, id));
+        System.out.println("yPrime1: " + yPrime1);
+
+        timeout();
+        BigInteger xPrime2 = reconstructSecret(new Utils.ShareWrapper(differenceXA_2,
+                id, id));
+        System.out.println("xPrime2: " + xPrime2);
+
+        timeout();
+        BigInteger yPrime2 = reconstructSecret(new Utils.ShareWrapper(differenceYB_2,
+                id, id));
+        System.out.println("yPrime2: " + yPrime2);
+
+
+        BigInteger xPrimeBi1 = xPrime1.multiply(b_1_i);
+        BigInteger yPrimeAi1 = yPrime1.multiply(a_1_i);
+        BigInteger xPrimeYPrime1 = xPrime1.multiply(yPrime1);
+        BigInteger z_i_1 = c_1_i.add(xPrimeBi1).add(yPrimeAi1).add(xPrimeYPrime1);
+
+        BigInteger xPrimeBi2 = xPrime2.multiply(b_2_i);
+        BigInteger yPrimeAi2 = yPrime2.multiply(a_2_i);
+        BigInteger xPrimeYPrime2 = xPrime2.multiply(yPrime2);
+        BigInteger z_i_2 = c_2_i.add(xPrimeBi2).add(yPrimeAi2).add(xPrimeYPrime2);
+
+        timeout();
+        BigInteger result1 = reconstructSecret(new Utils.ShareWrapper(z_i_1, id, id));
+        System.out.println("Sub multiplication1: " + result1);
+
+        timeout();
+        BigInteger result2 = reconstructSecret(new Utils.ShareWrapper(z_i_2, id, id));
+        System.out.println("Sub multiplication2: " + result2);
+
+
+        if (id == 5) {
+            BigInteger finalResult = result1.multiply(result2);
+            finalResult = finalResult.multiply(new BigInteger(String.valueOf(privateValue)));
             System.out.println("Final result (including peer 5's secret: " + finalResult);
         }
     }
@@ -130,6 +226,7 @@ public class Peer {
     private BigInteger reconstructSecret(Utils.ShareWrapper shareWrapper) throws IOException {
         broadcastValue(shareWrapper);
         Utils.ShareWrapper[] shareWrappers = acceptSharesFromNPeers(Utils.NUM_PEERS);
+        System.out.println("Reconstruct shares: received " + Arrays.toString(shareWrappers));
         BigInteger[] y = new BigInteger[shareWrappers.length];
         int[] x = new int[shareWrappers.length];
         for (int i = 0; i < shareWrappers.length; i++) {

@@ -1,13 +1,20 @@
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.SocketException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
 
 public class Runner {
     BigInteger secret;
     protected static final int PORT = 7890;
+    DatagramSocket datagramSocket = new DatagramSocket(PORT);
+
+    public Runner() throws SocketException {
+    }
 
     public static void main(String[] args) throws IOException {
         Runner runner = new Runner();
@@ -16,7 +23,7 @@ public class Runner {
     }
 
     private void demonstrateBeaverTriples() throws IOException {
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 4; i++) {
             waitForContinue();
             int a = 2;
             int b = 3;
@@ -28,6 +35,7 @@ public class Runner {
             BigInteger[] fA = Utils.getF(polynomialA, idToXMap);
             BigInteger[] fB = Utils.getF(polynomialB, idToXMap);
             BigInteger[] fC = Utils.getF(polynomialC, idToXMap);
+
             Utils.distributeShares(fA, idToXMap, Utils.NUM_PEERS, Utils.SERVICE_NAME_PEER,
                     Peer.PORT);
             Utils.distributeShares(fB, idToXMap, Utils.NUM_PEERS, Utils.SERVICE_NAME_PEER,
@@ -63,16 +71,14 @@ public class Runner {
     public BigInteger getSecret() {
         Random r = new Random();
         int numBits = 80;
-        return new BigInteger(numBits, r);
+        return new BigInteger("40");
     }
 
     private void waitForContinue() throws IOException {
-        DatagramSocket datagramSocket = new DatagramSocket(PORT);
         for (int i = 0; i < Utils.NUM_PEERS; i++) {
             byte[] buffer = new byte[256];
             DatagramPacket datagramPacket = new DatagramPacket(buffer, buffer.length);
             datagramSocket.receive(datagramPacket);
         }
-        datagramSocket.close();
     }
 }
