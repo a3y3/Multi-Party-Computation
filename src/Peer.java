@@ -1,4 +1,6 @@
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.net.*;
 import java.util.HashMap;
@@ -11,6 +13,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class Peer {
     public static final int PORT = 5760;
+    public static final int TCP_PORT = 4874;
     int id;
     DatagramSocket datagramSocket;
 
@@ -19,12 +22,13 @@ public class Peer {
     }
 
     public static void main(String[] args) throws IOException {
+        System.out.println("********* Demonstration 1: Secret reconstruction *********");
         Peer peer = new Peer();
         Utils.ShareWrapper shareWrapper = peer.init();
         BigInteger reconstructedSecret = peer.reconstructSecret(shareWrapper);
         System.out.println("Found the secret! Value: " + reconstructedSecret);
         peer.timeout();
-        System.out.println("*****");
+        System.out.println("********* Demonstration 2: Secret summation *********");
         int privateValue = switch (peer.id) {
             case 1 -> 11;
             case 2 -> 15;
@@ -36,24 +40,29 @@ public class Peer {
         System.out.println("Found the summation! Value: " + summation);
 
         peer.timeout();
-        System.out.println("*****");
+        System.out.println("********* Demonstration 3: Secret multiplication " +
+                "(Naive version) *********");
         long start = System.nanoTime();
-        peer.demonstrateBeaverTriplesSequential(privateValue);
+        peer.demonstrateBeaverTriplesNaive(privateValue);
         long end = System.nanoTime();
         long elapsedTime = end - start;
         System.out.println("Sequential execution took: " +
                 TimeUnit.SECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS) + "s.");
-        System.out.println("*****");
+
+        peer.timeout();
+        System.out.println("********* Demonstration 4: Secret multiplication (Fast " +
+                "version) *********");
         start = System.nanoTime();
-        peer.demonstrateBeaverTriplesParallel(privateValue);
+        peer.demonstrateBeaverTriplesFast(privateValue);
         end = System.nanoTime();
         elapsedTime = end - start;
         System.out.println("Parallel execution took: " +
                 TimeUnit.SECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS) + "s.");
     }
 
-    private void demonstrateBeaverTriplesSequential(int privateValue) throws IOException {
+    private void demonstrateBeaverTriplesNaive(int privateValue) throws IOException {
         BigInteger finalResult = new BigInteger("1");
+        Utils.OneMillionBeaverTriples millionTriples = null;
         for (int i = 1; i <= Utils.NUM_PEERS - 1; i += 2) {
             if (id == i || id == i + 1) {
                 Polynomial polynomial =
@@ -72,10 +81,22 @@ public class Peer {
             BigInteger x_i = shareWrappers[0].share;
             BigInteger y_i = shareWrappers[1].share;
 
-            sendContinueToRunner();
+            if (i == 1) {
+                sendContinueToRunner();
+                ServerSocket serverSocket = new ServerSocket(TCP_PORT);
+                millionTriples = acceptMillionTriples(serverSocket);
+                serverSocket.close();
+            }
 
-            //There aren't three peers, this is the runner sending 3 separate values.
-            shareWrappers = acceptSharesFromNPeers(3);
+            BigInteger a = millionTriples.a[i];
+            BigInteger b = millionTriples.b[i];
+            BigInteger c = millionTriples.c[i];
+
+            shareWrappers = new Utils.ShareWrapper[3];
+            shareWrappers[0] = new Utils.ShareWrapper(a, id, id);
+            shareWrappers[1] = new Utils.ShareWrapper(b, id, id);
+            shareWrappers[2] = new Utils.ShareWrapper(c, id, id);
+
             BigInteger a_i = shareWrappers[0].share;
             BigInteger b_i = shareWrappers[1].share;
             BigInteger c_i = shareWrappers[2].share;
@@ -112,7 +133,7 @@ public class Peer {
         }
     }
 
-    private void demonstrateBeaverTriplesParallel(int privateValue) throws IOException {
+    private void demonstrateBeaverTriplesFast(int privateValue) throws IOException {
         if (id != 5) {
             Polynomial polynomial =
                     new Polynomial(new BigInteger(String.valueOf(privateValue)));
@@ -240,6 +261,14 @@ public class Peer {
             y[i] = shareWrappers[i].share;
         }
         return Polynomial.calculateSecret(x, y, 2);
+    }
+
+    private Utils.OneMillionBeaverTriples acceptMillionTriples(ServerSocket serverSocket) throws IOException {
+        Socket clientSocket = serverSocket.accept();
+        BufferedReader in =
+                new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        String triples = in.readLine();
+        return new Utils.OneMillionBeaverTriples(triples);
     }
 
     private Utils.ShareWrapper[] acceptSharesFromNPeers(int n) throws IOException {

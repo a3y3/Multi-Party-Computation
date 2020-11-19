@@ -39,7 +39,7 @@ public class Utils {
     public static class OneMillionBeaverTriples {
         int nBits = 20;
         Random r = new Random();
-        int n = (int) Math.pow(2, 20);
+        int n = (int) Math.pow(2, 17);
         private static final String DELIMITER = ";"; //Separates a,b,c.
         private static final String SEPARATOR = "/"; //Separates 2 triples (a;b;c/a;b;c/)
 
@@ -53,6 +53,12 @@ public class Utils {
                 b[i] = new BigInteger(nBits, r);
                 c[i] = a[i].multiply(b[i]);
             }
+        }
+
+        public OneMillionBeaverTriples(BigInteger[] a, BigInteger[] b, BigInteger[] c) {
+            this.a = a;
+            this.b = b;
+            this.c = c;
         }
 
         OneMillionBeaverTriples(String oneMillionTriples) {
@@ -153,7 +159,7 @@ public class Utils {
         DatagramPacket packet;
         //peer i gets share f[x]
         for (int i = 1; i <= numPeers; i++) {
-            String peerName = serviceName + "_" + i;
+            String peerName = serviceName + "_" + i;// multi-party-computation_peer_1
             int x = idToXMap.get(i);
             Utils.ShareWrapper shareWrapper = new Utils.ShareWrapper(f[i], i, x);
             byte[] buffer = shareWrapper.toString().getBytes();
