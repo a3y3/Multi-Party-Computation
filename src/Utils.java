@@ -5,6 +5,9 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.*;
 
+/**
+ * Common utilities and functions that are shared for the Runner and a Peer.
+ */
 public class Utils {
     public static final int NUM_PEERS = 5;
     public static final String DELIMITER = ";";
@@ -12,6 +15,14 @@ public class Utils {
     public static final String SERVICE_NAME_RUNNER = SERVICE_NAME + "_runner_1";
     public static final String SERVICE_NAME_PEER = SERVICE_NAME + "_peer";
 
+    /**
+     * Wrapper for holding a share value, an id, and an x.
+     * {@code id} represents the id of the peer that is receiving a share. In most
+     * cases, the id of the peer will also be the value of x for calculating the value
+     * of f(x)=a[n]x^n+a[n-1]x^n-1...f(0). However, sometimes, x can be different. As
+     * such, for solving a Polynomial, {@code x} should be supplied to the
+     * calculateSecret function, and not {@code id}.
+     */
     public static class ShareWrapper {
         BigInteger share;
         int id;
@@ -36,6 +47,17 @@ public class Utils {
         }
     }
 
+    /**
+     * In the naive implementation of beaver triples multiplication, the dealer creates
+     * 1 million triples and sends the shares of those triples to peers.
+     * This class makes it really easy for the Dealer to do that. Creating a new
+     * instance automatically generates {@code n} randomized triples. It also has a
+     * toString() and a constructor to create an instance out of a String, making
+     * sending and receiving these triples trivial.
+     * Right now, the value of n is 2^17, because sending 1 million shares might freeze
+     * up some machines. If one million shares have to be sent, {@code n} below is the
+     * ONLY variable that needs to be changed (to 2^20).
+     */
     public static class OneMillionBeaverTriples {
         int nBits = 20;
         Random r = new Random();

@@ -1,6 +1,11 @@
 import java.math.BigInteger;
 import java.util.Random;
 
+/**
+ * Represents a generic polynomial. Use new Polynomial() to create a new polynomial
+ * with randomized 80bit co-efficients. Each Polynomial can calculate f(x), and
+ * calculate the value of f(0) given n equations and n variables (if f is unknown).
+ */
 public class Polynomial {
     BigInteger[] a;
     int degree = 2;
@@ -21,7 +26,7 @@ public class Polynomial {
     }
 
     /**
-     * Given an x, calculates and return f(x).
+     * Given an x, calculates and return f(x)=a[2]x^2+a[1]x+a[0].
      *
      * @param x input x.
      * @return the value of f(x). Evaluation is done by plugging the value of x into
@@ -40,7 +45,11 @@ public class Polynomial {
     }
 
     /**
-     * {@inheritDoc}
+     * In a t,n scheme, given t values for x and t values for y, this function returns
+     * the value of f(0). This function is not generic and only works for a polynomial
+     * of degree 2, ie. ax^2+bx+c.
+     * The formula for calculating the secret is too complicated to be written in this
+     * doc. Please see README.md for the formula.
      */
     public BigInteger calculateSecret2Degree(int[] x, BigInteger[] y) {
         BigInteger result;
@@ -54,14 +63,18 @@ public class Polynomial {
     }
 
     /**
-     * In a t,n scheme, given t values for x and t values for y, this function returns
-     * the value of f(0). This function is not generic and only works for a polynomial
-     * of degree 2, ie. ax^2+bx+c.
-     * The formula for calculating the secret is too complicated to be written in this
-     * doc. Please see README.md for the formula.
+     * Wrapper for calculating a secret given n equations and n variables. Currently
+     * only calls {@code calculateSecret2Degree()}.
+     * The function creates a fake Polynomial object and uses it to call the {@code
+     * calculateSecret2Degree()} function.
+     *
+     * @param x      the n values of x in f1(x), f2(x)...fn(x).
+     * @param y      the n values of f1(x), f2(x)...fn(x).
+     * @param degree the degree of the polynomial in question.
+     * @return The calculated secret.
      */
     public static BigInteger calculateSecret(int[] x, BigInteger[] y, int degree) {
-        if (degree != 2){
+        if (degree != 2) {
             try {
                 throw new UnsupportedPolynomialException();
             } catch (UnsupportedPolynomialException e) {
