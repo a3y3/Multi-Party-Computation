@@ -5,6 +5,11 @@ import java.net.*;
 import java.util.HashMap;
 import java.util.Random;
 
+/**
+ * Runs the main functionality. It assigns IDs to peers, creates the first secret and
+ * demonstrates reconstruction, and acts as a Dealer to generate Beaver Triples which
+ * are used in multi party private value multiplication.
+ */
 public class Runner {
     BigInteger secret;
     protected static final int PORT = 7890;
@@ -20,6 +25,11 @@ public class Runner {
         runner.demonstrateBeaverTriplesFast();
     }
 
+    /**
+     * Creates one million beaver triples, creates shares for them, then distributes
+     * them to peers.
+     * @throws IOException on creating a new TCP socket.
+     */
     private void demonstrateBeaverTriplesNaive() throws IOException {
         waitForContinue();
         Utils.OneMillionBeaverTriples millionBeaverTriples =
@@ -56,7 +66,10 @@ public class Runner {
         }
     }
 
-
+    /**
+     * Creates a new Beaver Triple using PRNG and sends to peers.
+     * @throws IOException see {@code Utils.distributeShares()}
+     */
     private void demonstrateBeaverTriplesFast() throws IOException {
         for (int i = 0; i < 2; i++) {
             waitForContinue();
@@ -112,6 +125,10 @@ public class Runner {
         return new BigInteger(numBits, r);
     }
 
+    /**
+     * "Pauses" the Runner until a signal to continue is received from the peer.
+     * @throws IOException on {@code datagramSocket.receive()}.
+     */
     private void waitForContinue() throws IOException {
         for (int i = 0; i < Utils.NUM_PEERS; i++) {
             byte[] buffer = new byte[256];
