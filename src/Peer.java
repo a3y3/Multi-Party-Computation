@@ -31,6 +31,7 @@ public class Peer {
      * only the shares.
      * - {@code demonstrateBeaverTriplesFast()}, a slightly faster way to multiply
      * secrets.
+     *
      * @param args STDIN, ignored.
      * @throws IOException for socket.send().
      */
@@ -77,19 +78,22 @@ public class Peer {
      * This function accepts a million triples from a trusted dealer (Runner.java) and
      * picks 2 triples out of them to do the multiplication.
      * We need to do the multiplication of secrets of containers 1-5. The approach is:
-     *      Containers 1 and 2 create shares for their private values and distribute
-     *      them. All the containers use beaver triple multiplication to multiply them
-     *      and store the answer.
-     *      Containers 3 and 4 repeat the process, and multiply their result with the
-     *      result acquired in the step above.
-     *      Container 5 then multiplies the result acquired above with its own private
-     *      value, thus getting the multiplication of all the private shares.
+     * Containers 1 and 2 create shares for their private values and distribute
+     * them. All the containers use beaver triple multiplication to multiply them
+     * and store the answer.
+     * Containers 3 and 4 repeat the process, and multiply their result with the
+     * result acquired in the step above.
+     * Container 5 then multiplies the result acquired above with its own private
+     * value, thus getting the multiplication of all the private shares.
+     *
      * @param privateValue the private value for this class.
      * @throws IOException on socket.send()
      */
     private void demonstrateBeaverTriplesNaive(int privateValue) throws IOException {
-        BigInteger finalResult = new BigInteger("1");
+        BigInteger finalResult;
         Utils.OneMillionBeaverTriples millionTriples = null;
+        BigInteger[] zi = new BigInteger[2];
+
         for (int i = 1; i <= Utils.NUM_PEERS - 1; i += 2) {
             if (id == i || id == i + 1) {
                 Polynomial polynomial =
@@ -109,55 +113,60 @@ public class Peer {
             BigInteger y_i = shareWrappers[1].share;
 
             if (i == 1) {
+                //accept million triples only once.
                 sendContinueToRunner();
                 ServerSocket serverSocket = new ServerSocket(TCP_PORT);
                 millionTriples = acceptMillionTriples(serverSocket);
                 serverSocket.close();
             }
 
-            BigInteger a = millionTriples.a[i];
-            BigInteger b = millionTriples.b[i];
-            BigInteger c = millionTriples.c[i];
-
-            shareWrappers = new Utils.ShareWrapper[3];
-            shareWrappers[0] = new Utils.ShareWrapper(a, id, id);
-            shareWrappers[1] = new Utils.ShareWrapper(b, id, id);
-            shareWrappers[2] = new Utils.ShareWrapper(c, id, id);
-
-            BigInteger a_i = shareWrappers[0].share;
-            BigInteger b_i = shareWrappers[1].share;
-            BigInteger c_i = shareWrappers[2].share;
-
-            BigInteger differenceXA = x_i.subtract(a_i);
-            BigInteger differenceYB = y_i.subtract(b_i);
-
-            timeout();
-            BigInteger xPrime = reconstructSecret(new Utils.ShareWrapper(differenceXA,
-                    id, id));
-            System.out.println("xPrime: " + xPrime);
-
-            timeout();
-            BigInteger yPrime = reconstructSecret(new Utils.ShareWrapper(differenceYB,
-                    id, id));
-            System.out.println("yPrime: " + yPrime);
-
-            BigInteger xPrimeBi = xPrime.multiply(b_i);
-            BigInteger yPrimeAi = yPrime.multiply(a_i);
-            BigInteger xPrimeYPrime = xPrime.multiply(yPrime);
-            BigInteger z_i = c_i.add(xPrimeBi).add(yPrimeAi).add(xPrimeYPrime);
-
-            timeout();
-            BigInteger result = reconstructSecret(new Utils.ShareWrapper(z_i, id, id));
-            System.out.println("Sub multiplication: " + result);
-
-            finalResult = finalResult.multiply(result);
-            System.out.println("Multiplication so far: " + finalResult);
+            zi[(i - 1) / 2] = MPCMultiply(x_i, y_i, millionTriples, i);
         }
+        BigInteger z_3i = MPCMultiply(zi[0], zi[1], millionTriples, 3);
+
+        timeout();
+        BigInteger z3 = reconstructSecret(new Utils.ShareWrapper(z_3i, id, id));
+
         if (id == 5) {
             finalResult =
-                    finalResult.multiply(new BigInteger(String.valueOf(privateValue)));
+                    z3.multiply(new BigInteger(String.valueOf(privateValue)));
             System.out.println("Final result (including peer 5's secret): " + finalResult);
         }
+    }
+
+    /**
+     * Calculates z_i such that z_i=c_i+xPrime*b_i+yPrime*a_i+xPrime*yPrime (see the
+     * function for the meaning of these values
+     * @param x_i value of share x_i
+     * @param y_i value of share y_i
+     * @param millionTriples 1 million Beaver Triples
+     * @param i indicates which triple to choose from
+     * @return z_i
+     * @throws IOException thrown by {@code reconstructSecret()}
+     */
+    private BigInteger MPCMultiply(BigInteger x_i, BigInteger y_i,
+                                   Utils.OneMillionBeaverTriples millionTriples, int i) throws IOException {
+        BigInteger a_i = millionTriples.a[i];
+        BigInteger b_i = millionTriples.b[i];
+        BigInteger c_i = millionTriples.c[i];
+
+        BigInteger differenceXA = x_i.subtract(a_i);
+        BigInteger differenceYB = y_i.subtract(b_i);
+
+        timeout();
+        BigInteger xPrime = reconstructSecret(new Utils.ShareWrapper(differenceXA,
+                id, id));
+        System.out.println("xPrime: " + xPrime);
+
+        timeout();
+        BigInteger yPrime = reconstructSecret(new Utils.ShareWrapper(differenceYB,
+                id, id));
+        System.out.println("yPrime: " + yPrime);
+
+        BigInteger xPrimeBi = xPrime.multiply(b_i);
+        BigInteger yPrimeAi = yPrime.multiply(a_i);
+        BigInteger xPrimeYPrime = xPrime.multiply(yPrime);
+        return c_i.add(xPrimeBi).add(yPrimeAi).add(xPrimeYPrime);
     }
 
     /**
@@ -166,6 +175,7 @@ public class Peer {
      * every time). Also, this function gets the shares of the private values of all
      * the containers at once, and then multiplies them together, resulting in a faster
      * overall execution.
+     *
      * @param privateValue the private value for this class.
      * @throws IOException on socket.send()
      */
@@ -260,6 +270,7 @@ public class Peer {
      * Accepts shares of private values from all containers and adds them together. The
      * function then calls {@code reconstructSecret()} to calculate the secret for the
      * new polynomial, which results in adding up all the shares.
+     *
      * @param privateValue the private value for this class.
      * @return the summation of all the private values.
      * @throws IOException on socket.send().
@@ -280,6 +291,7 @@ public class Peer {
     /**
      * Utility method for {@code demonstrateSecretShareSummation()}. This function adds
      * all the shares and returns the result.
+     *
      * @param shareWrappers a list of shares whose value is to be added.
      * @return a {@code ShareWrapper} object whose share is the summation of all the
      * shares inside {@code shareWrappers}.
@@ -296,6 +308,7 @@ public class Peer {
      * Serves to accept the first message from Runner. Note that this function is
      * important because it sets the id of the Peer. The id is used later in many
      * functions, so this function is critical and must not be omitted.
+     *
      * @return A {@code ShareWrapper} object that contains the id of the peer and the
      * share for testing reconstruction of the secret.
      * @throws IOException see {@code acceptMessage()}.
@@ -315,6 +328,7 @@ public class Peer {
      * This function gathers shares from everyone else (and also broadcasts it's own
      * shares to everyone else) and reconstructs the secret by calling {@code
      * Polynomial.calculateSecret()}.
+     *
      * @param shareWrapper The share of this peer. Mainly used for broadcasting it to
      *                     everyone else.
      * @return the calculated secret, ie. f(0).
@@ -334,6 +348,7 @@ public class Peer {
 
     /**
      * Accepts one million triples from the Runner.
+     *
      * @param serverSocket a TCP socket used to accept an incoming connection from the
      *                     Runner. It's the responsibility of the caller of this
      *                     function to close this socket after use.
@@ -351,6 +366,7 @@ public class Peer {
     /**
      * A for loop in this function accepts shares from {@code n} peers and returns an
      * array of the received shares.
+     *
      * @param n the number of peers to accept shares from.
      * @return an array of the received shares.
      * @throws IOException see {@code acceptMessage()}.
@@ -366,10 +382,11 @@ public class Peer {
 
     /**
      * Given a share, sends it to {@code peerName}.
+     *
      * @param shareWrapper the share to be sent.
-     * @param peerName the name of the peer to send it to.
-     * @param socket used for sending the share.
-     * @param port the port on which the share is to be sent to.
+     * @param peerName     the name of the peer to send it to.
+     * @param socket       used for sending the share.
+     * @param port         the port on which the share is to be sent to.
      * @throws IOException on socket.send().
      */
     @SuppressWarnings("SameParameterValue")
@@ -384,6 +401,7 @@ public class Peer {
 
     /**
      * Uses a for loop to send a share to everyone else in the group.
+     *
      * @param shareWrapper the share to be broadcasted.
      * @throws IOException see {@code sendShareToPeer()}
      */
@@ -398,6 +416,7 @@ public class Peer {
 
     /**
      * Accepts a single UDP message.
+     *
      * @return the received message.
      * @throws IOException on {@code datagramSocket.receive()}
      */
@@ -411,6 +430,7 @@ public class Peer {
     /**
      * The runner might need to wait for peers to do some processing. This function
      * sends a continue message to runner to signal it to resume operations.
+     *
      * @throws IOException on {@code datagramSocket.send()}
      */
     private void sendContinueToRunner() throws IOException {
